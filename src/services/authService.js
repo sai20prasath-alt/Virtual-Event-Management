@@ -1,6 +1,6 @@
 const bcrypt = require('bcrypt');
 const jwt = require('jsonwebtoken');
-const { JWT_SECRET } = require('../config/constants');
+const jwt_secret = process.env.JWT_SECRET || 'super_secret_key_123';
 
 class AuthService {
   static async hashPassword(password) {
@@ -12,11 +12,11 @@ class AuthService {
   }
 
   static generateToken(userId, role) {
-    return jwt.sign({ userId, role }, JWT_SECRET, { expiresIn: '24h' });
+    return jwt.sign({ userId, role }, jwt_secret, { expiresIn: '24h' });
   }
 
   static verifyToken(token) {
-    return jwt.verify(token, JWT_SECRET);
+    return jwt.verify(token, jwt_secret);
   }
 
   static isValidEmail(email) {

@@ -1,4 +1,4 @@
-const UserModel = require('../models/userModel');
+const UserModel = require('../models/user');
 const AuthService = require('../services/authService');
 const EmailService = require('../services/emailService');
 const logger = require('../utils/logger');
@@ -10,7 +10,8 @@ class AuthController {
       const { email, password, name, role } = req.body;
 
       // Check if user already exists
-      if (UserModel.findByEmail(email)) {
+      const existingUser = await UserModel.findByEmail(email);
+      if (existingUser) {
         logger.warn(`Registration attempt with existing email: ${email}`);
         return res.status(400).json(
           formatError('Email already registered', 400)
@@ -21,7 +22,7 @@ class AuthController {
       const hashedPassword = await AuthService.hashPassword(password);
 
       // Create user
-      const user = UserModel.create({
+      const user = await UserModel.create({
         email,
         password: hashedPassword,
         name,
@@ -57,7 +58,7 @@ class AuthController {
     try {
       const { email, password } = req.body;
 
-      const user = UserModel.findByEmail(email);
+      const user = await UserModel.findByEmail(email);
 
       if (!user) {
         logger.warn(`Login attempt with non-existent email: ${email}`);

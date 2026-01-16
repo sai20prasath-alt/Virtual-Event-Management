@@ -1,5 +1,5 @@
 const EventModel = require('../models/eventModel');
-const UserModel = require('../models/userModel');
+const UserModel = require('../models/user');
 const logger = require('../utils/logger');
 
 class EventService {

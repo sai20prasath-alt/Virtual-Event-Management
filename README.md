@@ -42,7 +42,7 @@ src/
 │   ├── eventController.js # Event management logic
 │   └── participantController.js # Participant management logic
 ├── models/
-│   ├── userModel.js       # In-memory user data model
+│   ├── user.js       # In-memory user data model
 │   └── eventModel.js      # In-memory event data model
 ├── services/
 │   ├── authService.js     # Authentication utilities (hashing, JWT)
