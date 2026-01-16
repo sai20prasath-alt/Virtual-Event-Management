@@ -1,10 +1,9 @@
 const express = require('express');
-const authRoutes = require('./routes/authRoutes');
-const eventRoutes = require('./routes/eventRoutes');
-const participantRoutes = require('./routes/participantRoutes');
-const errorHandler = require('./middleware/errorHandler');
-const logger = require('./utils/logger');
-const { PORT } = require('./config/constants');
+const authRoutes = require('./src/routes/authRoutes');
+const eventRoutes = require('./src/routes/eventRoutes');
+const participantRoutes = require('./src/routes/participantRoutes');
+const errorHandler = require('./src/middleware/errorHandler');
+const logger = require('./src/utils/logger');
 
 const app = express();
 
@@ -39,9 +38,11 @@ app.use((req, res) => {
 // Error handling middleware (must be last)
 app.use(errorHandler);
 
+const port = process.env.PORT || 3000;
+
 // Start server
-const server = app.listen(PORT, () => {
-  logger.info(`Server started on port ${PORT}`);
+const server = app.listen(port, () => {
+  logger.info(`Server started on port ${port}`);
 });
 
 // Graceful shutdown

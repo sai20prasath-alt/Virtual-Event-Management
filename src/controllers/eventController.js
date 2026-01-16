@@ -1,6 +1,6 @@
 const EventService = require('../services/eventService');
 const EventModel = require('../models/eventModel');
-const UserModel = require('../models/userModel');
+const UserModel = require('../models/user');
 const logger = require('../utils/logger');
 const { formatResponse, formatError } = require('../utils/responseFormatter');
 
@@ -8,10 +8,13 @@ class EventController {
   static async createEvent(req, res) {
     try {
       const { title, description, date, time, location, maxParticipants } = req.body;
+      console.log('Create user Request Body:', req.user);
       const organizerId = req.user.userId;
 
       // Verify user is organizer
-      const user = UserModel.findById(organizerId);
+      const user = await UserModel.findById(organizerId);
+      console.log('User Info:', user);
+      console.log('User Role:', user.role);
       if (user.role !== 'organizer') {
         logger.warn(`Unauthorized event creation attempt by user: ${organizerId}`);
         return res.status(403).json(

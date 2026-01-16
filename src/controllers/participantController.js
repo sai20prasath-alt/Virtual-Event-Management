@@ -1,5 +1,5 @@
 const EventModel = require('../models/eventModel');
-const UserModel = require('../models/userModel');
+const UserModel = require('../models/user');
 const EmailService = require('../services/emailService');
 const EventService = require('../services/eventService');
 const logger = require('../utils/logger');
@@ -152,7 +152,7 @@ class ParticipantController {
         formatResponse(
           {
             eventId,
-            participantCount: participantDetail.length,
+            participantCount: participantDetails.length,
             participants: participantDetails,
           },
           'Event participants retrieved successfully'
