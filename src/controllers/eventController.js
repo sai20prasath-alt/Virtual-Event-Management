@@ -8,13 +8,10 @@ class EventController {
   static async createEvent(req, res) {
     try {
       const { title, description, date, time, location, maxParticipants } = req.body;
-      console.log('Create user Request Body:', req.user);
       const organizerId = req.user.userId;
 
       // Verify user is organizer
       const user = await UserModel.findById(organizerId);
-      console.log('User Info:', user);
-      console.log('User Role:', user.role);
       if (user.role !== 'organizer') {
         logger.warn(`Unauthorized event creation attempt by user: ${organizerId}`);
         return res.status(403).json(
@@ -22,7 +19,7 @@ class EventController {
         );
       }
 
-      const event = EventService.createEvent(
+      const event = await EventService.createEvent(
         {
           title,
           description,
@@ -34,7 +31,7 @@ class EventController {
         organizerId
       );
 
-      logger.info(`Event created: ${event.id} by user ${organizerId}`);
+      logger.info(`Event created: ${event._id} by user ${organizerId}`);
 
       res.status(201).json(
         formatResponse(event, 'Event created successfully', 201)
@@ -47,7 +44,7 @@ class EventController {
 
   static async getAllEvents(req, res) {
     try {
-      const events = EventModel.getAll();
+      const events = await EventModel.find();
 
       logger.info(`Retrieved all events: ${events.length} events`);
 
@@ -63,7 +60,7 @@ class EventController {
   static async getEventById(req, res) {
     try {
       const { id } = req.params;
-      const event = EventService.getEventDetails(id);
+      const event = await EventService.getEventDetails(id);
 
       logger.info(`Retrieved event: ${id}`);
 
@@ -83,7 +80,7 @@ class EventController {
       const { title, description, date, time, location, maxParticipants, status } = req.body;
       const organizerId = req.user.userId;
 
-      const updatedEvent = EventService.updateEvent(
+      const updatedEvent = await EventService.updateEvent(
         id,
         { title, description, date, time, location, maxParticipants, status },
         organizerId
@@ -111,7 +108,7 @@ class EventController {
       const { id } = req.params;
       const organizerId = req.user.userId;
 
-      const result = EventService.deleteEvent(id, organizerId);
+      const result = await EventService.deleteEvent(id, organizerId);
 
       logger.info(`Event deleted: ${id}`);
 
@@ -131,7 +128,7 @@ class EventController {
   static async getUserOrganizedEvents(req, res) {
     try {
       const userId = req.user.userId;
-      const events = EventService.getUserOrganizedEvents(userId);
+      const events = await EventService.getUserOrganizedEvents(userId);
 
       logger.info(`Retrieved organized events for user: ${userId}`);
 
