@@ -3,14 +3,17 @@ const UserModel = require('../models/user');
 const logger = require('../utils/logger');
 
 class EventService {
-  static createEvent(eventData, organizerId) {
+  static async createEvent(eventData, organizerId) {
     try {
       if (!eventData.title || !eventData.date || !eventData.time) {
         throw new Error('Title, date, and time are required');
       }
 
-      const event = EventModel.create(eventData, organizerId);
-      logger.info(`Event created: ${event.id}`);
+      const event = await EventModel.create({
+        ...eventData,
+        organizerId,
+      });
+      logger.info(`Event created: ${event._id}`);
       return event;
     } catch (error) {
       logger.error('Error creating event', error);
@@ -18,19 +21,23 @@ class EventService {
     }
   }
 
-  static updateEvent(eventId, updateData, organizerId) {
+  static async updateEvent(eventId, updateData, organizerId) {
     try {
-      const event = EventModel.findById(eventId);
+      const event = await EventModel.findById(eventId);
 
       if (!event) {
         throw new Error('Event not found');
       }
 
-      if (event.organizerId !== organizerId) {
+      if (event.organizerId.toString() !== organizerId) {
         throw new Error('Unauthorized: Only event organizer can update');
       }
 
-      const updatedEvent = EventModel.update(eventId, updateData);
+      const updatedEvent = await EventModel.findByIdAndUpdate(
+        eventId,
+        updateData,
+        { new: true }
+      );
       logger.info(`Event updated: ${eventId}`);
       return updatedEvent;
     } catch (error) {
@@ -39,19 +46,19 @@ class EventService {
     }
   }
 
-  static deleteEvent(eventId, organizerId) {
+  static async deleteEvent(eventId, organizerId) {
     try {
-      const event = EventModel.findById(eventId);
+      const event = await EventModel.findById(eventId);
 
       if (!event) {
         throw new Error('Event not found');
       }
 
-      if (event.organizerId !== organizerId) {
+      if (event.organizerId.toString() !== organizerId) {
         throw new Error('Unauthorized: Only event organizer can delete');
       }
 
-      EventModel.delete(eventId);
+      await EventModel.findByIdAndDelete(eventId);
       logger.info(`Event deleted: ${eventId}`);
       return { success: true, message: 'Event deleted successfully' };
     } catch (error) {
@@ -60,31 +67,38 @@ class EventService {
     }
   }
 
-  static getEventDetails(eventId) {
+  static async getEventDetails(eventId) {
     try {
-      const event = EventModel.findById(eventId);
+      const Participant = require('../models/participant');
+      
+      const event = await EventModel.findById(eventId).populate({
+        path: 'organizerId',
+        select: 'name email role',
+      });
 
       if (!event) {
         throw new Error('Event not found');
       }
 
-      // Enrich with organizer details
-      const organizer = UserModel.findById(event.organizerId);
-      const participantDetails = event.participants.map((userId) => {
-        const user = UserModel.findById(userId);
-        return {
-          id: user.id,
-          name: user.name,
-          email: user.email,
-        };
+      // Get participant details from Participant collection
+      const participants = await Participant.find({ eventId }).populate({
+        path: 'userId',
+        select: 'name email role',
       });
 
+      const participantDetails = participants.map((p) => ({
+        id: p.userId._id,
+        name: p.userId.name,
+        email: p.userId.email,
+        status: p.status,
+      }));
+
       return {
-        ...event,
+        ...event.toObject(),
         organizer: {
-          id: organizer.id,
-          name: organizer.name,
-          email: organizer.email,
+          id: event.organizerId._id,
+          name: event.organizerId.name,
+          email: event.organizerId.email,
         },
         participantDetails,
       };
@@ -94,23 +108,23 @@ class EventService {
     }
   }
 
-  static getUserRegisteredEvents(userId) {
+  static async getUserRegisteredEvents(userId) {
     try {
-      const allEvents = EventModel.getAll();
-      const userEvents = allEvents.filter((event) =>
-        event.participants.includes(userId)
-      );
+      const Participant = require('../models/participant');
+      
+      const participants = await Participant.find({ userId }).populate('eventId');
+      const events = participants.map((p) => p.eventId);
 
-      return userEvents;
+      return events;
     } catch (error) {
       logger.error('Error getting user registered events', error);
       throw error;
     }
   }
 
-  static getUserOrganizedEvents(userId) {
+  static async getUserOrganizedEvents(userId) {
     try {
-      return EventModel.getByOrganizerId(userId);
+      return await EventModel.findByOrganizerId(userId);
     } catch (error) {
       logger.error('Error getting user organized events', error);
       throw error;
